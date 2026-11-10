@@ -395,6 +395,7 @@ footer.site-footer a { color: var(--accent); }
 
   <div class="pr-box">
     <span class="pr-label">PR</span>
+    <p class="pr-lede" id="prCapHint" hidden></p>
     <p class="pr-lede">控除額を計算してみて、今の保険料や保障の内容が自分に合っているか気になった方は、保険のプランナーに無料で相談して見直すという方法もあります。</p>
     <div class="pr-banner pr-cta-wrap">
       <a href="https://px.a8.net/svt/ejp?a8mat=4BEET1+AOM342+4GN2+NV9N6" rel="nofollow" class="pr-cta">保険の無料相談サイト「ガーデン」はココ</a>
@@ -713,6 +714,18 @@ footer.site-footer a { color: var(--accent); }
     shareHatena.href = 'https://b.hatena.ne.jp/entry/panel/?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(text);
   }
 
+  // 控除の上限を超えて保険料を払っている区分があれば、PR欄に一言出す（所得税の計算式で、これ以上払っても控除が増えない金額）
+  function capHint(A, B, C, D, E, kids) {
+    var over = [];
+    if (A > (kids ? 120000 : 80000) || B > 100000) over.push('一般の生命保険');
+    if (C > 80000) over.push('介護医療保険');
+    if (D > 80000 || E > 100000) over.push('個人年金保険');
+    var el = document.getElementById('prCapHint');
+    if (!el) return;
+    el.hidden = !over.length;
+    if (over.length) el.innerHTML = '入力した金額では、<strong>' + over.join('・') + '</strong>の保険料が控除の上限を超えています（上限を超えた分は、いくら払っても控除は増えません）。保険料と保障の内容が見合っているか、一度確かめてみるのもよいかもしれません。';
+  }
+
   function render() {
     var v = {};
     ids.forEach(function (id) { v[id] = Math.max(0, Number(inputs[id].value) || 0); });
@@ -739,6 +752,7 @@ footer.site-footer a { color: var(--accent); }
       '<div class="summary-card"><div class="label">住民税の控除額</div><div class="value">' + yen(totalRT) + '</div><div class="sub">上限7万円' + (sumRT > 70000 ? '（上限に到達）' : '') + '</div></div>' +
       '<div class="summary-card"><div class="label">税金が安くなる目安（年間）</div><div class="value">約' + yen(saveIT + saveRT) + '</div><div class="sub">所得税 約' + yen(saveIT) + '＋住民税 約' + yen(saveRT) + '</div></div>';
 
+    capHint(v.generalNew, v.generalOld, v.medical, v.pensionNew, v.pensionOld, kids);
     resultBody.innerHTML =
       '<tr><td>一般生命保険料' + (kids ? '（子育て世帯の特例）' : '') + '</td><td class="num">' + yen(gIT) + '</td><td class="num">' + yen(gRT) + '</td></tr>' +
       '<tr><td>介護医療保険料</td><td class="num">' + yen(mIT) + '</td><td class="num">' + yen(mRT) + '</td></tr>' +
@@ -791,6 +805,15 @@ footer.site-footer a { color: var(--accent); }
     });
   });
 })();
+</script>
+<script>
+// A8広告のクリックをGA4に記録（どのページ・どの広告がクリックされたか）
+document.addEventListener('click', function (e) {
+  var a = e.target.closest ? e.target.closest('a[href*="px.a8.net"]') : null;
+  if (!a || typeof gtag !== 'function') return;
+  var m = a.href.match(/a8mat=([^&]+)/);
+  gtag('event', 'pr_click', { ad_id: m ? decodeURIComponent(m[1]) : '', ad_text: a.textContent.trim().slice(0, 80) });
+});
 </script>
 </body>
 </html>
